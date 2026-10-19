@@ -5,15 +5,23 @@ interface AdminPageProps {
   onPreviewLive: () => void;
 }
 
+interface BlockedDateItem {
+  id: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  channel: 'Owner Block' | 'Maintenance' | 'Airbnb' | 'MakeMyTrip' | 'Booking.com';
+}
+
 export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
-  // Authentication State
+  // Authentication State (Username: amohan4, Password: Mnhnid@m673009)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState(false);
 
   // Active CMS Module Tab
-  const [activeModule, setActiveModule] = useState<'pricing' | 'occupancy' | 'kitchen' | 'features' | 'media' | 'sync'>('pricing');
+  const [activeModule, setActiveModule] = useState<'pricing' | 'occupancy' | 'kitchen' | 'features' | 'media' | 'sync' | 'calendar'>('pricing');
 
   // CMS Form States (Live Editable State)
   const [baseRate, setBaseRate] = useState(14000);
@@ -57,6 +65,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
     { id: 'm3', title: 'Mezzanine Bar Counter', sub: 'Includes custom ambient illumination', tag: 'Social Area', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB_ayaNzf0GP3BiOboD0PtIaRTLMwcd4kXGktcqY7wCvU3vogeHhDUwcH3oe1IgEFApa3u6F3lGfT9sIzU50OY-0s6xxgYcMKC5FKcGmMLO0RwuJMCZMJU1k_M_k9tUeScSVp-o8RMn7b492RnvEiqvNr_CijJDQJQ07qMAA8dLgcZqlXr6pFSzRCYnt6GhLOeeOuxw67eETcv55v0iGjWCiipK9WbR1VLwQdrCVBC2o1gJturAMmo-SM26NyHBNgKig7M' },
   ]);
 
+  // Calendar Management State (Admin only blockouts)
+  const [blockedDates, setBlockedDates] = useState<BlockedDateItem[]>([
+    { id: 'b1', startDate: '2025-10-18', endDate: '2025-10-21', reason: 'Airbnb Guest Reservation', channel: 'Airbnb' },
+    { id: 'b2', startDate: '2025-10-24', endDate: '2025-10-27', reason: 'Booking.com Guest Reservation', channel: 'Booking.com' },
+    { id: 'b3', startDate: '2025-11-06', endDate: '2025-11-08', reason: 'MakeMyTrip VIP Lock', channel: 'MakeMyTrip' },
+    { id: 'b4', startDate: '2025-12-24', endDate: '2025-12-28', reason: 'Owner Family Christmas Exclusive', channel: 'Owner Block' },
+  ]);
+  const [newBlockStart, setNewBlockStart] = useState('');
+  const [newBlockEnd, setNewBlockEnd] = useState('');
+  const [newBlockReason, setNewBlockReason] = useState('');
+  const [newBlockChannel, setNewBlockChannel] = useState<'Owner Block' | 'Maintenance' | 'Airbnb' | 'MakeMyTrip' | 'Booking.com'>('Owner Block');
+
   // Publish Status
   const [publishing, setPublishing] = useState(false);
   const [publishMessage, setPublishMessage] = useState('Publish Live Changes');
@@ -97,6 +117,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
     setTimeout(() => setIcalCopied(false), 2000);
   };
 
+  const handleAddBlockout = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBlockStart || !newBlockEnd || !newBlockReason) return;
+    const item: BlockedDateItem = {
+      id: 'b_' + Date.now(),
+      startDate: newBlockStart,
+      endDate: newBlockEnd,
+      reason: newBlockReason,
+      channel: newBlockChannel,
+    };
+    setBlockedDates([item, ...blockedDates]);
+    setNewBlockStart('');
+    setNewBlockEnd('');
+    setNewBlockReason('');
+  };
+
   // If NOT authenticated, render the secure admin login gate
   if (!isAuthenticated) {
     return (
@@ -108,7 +144,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             </div>
             <h2 className="font-serif text-2xl font-bold text-[#002720]">Admin Portal Security</h2>
             <p className="text-xs text-[#414846]">
-              Please enter your authorized administrator credentials for {VILLA_CONTACT.name}.
+              Please enter your authorized administrator credentials (username: <strong className="text-[#002720]">amohan4</strong>) for {VILLA_CONTACT.name}.
             </p>
           </div>
 
@@ -157,7 +193,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             <button
               type="button"
               onClick={onPreviewLive}
-              className="text-[#002720] font-bold hover:underline"
+              className="text-[#002720] font-bold hover:underline cursor-pointer"
             >
               Return to Public Site →
             </button>
@@ -176,7 +212,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#414846]">
               <span>Admin CMS &amp; Property Management Hub</span>
               <span className="material-symbols-outlined text-xs">chevron_right</span>
-              <span className="text-[#725b38]">Live Property Editor</span>
+              <span className="text-[#725b38]">Live Property &amp; Calendar Editor</span>
               <span className="material-symbols-outlined text-xs">chevron_right</span>
               <span className="text-[#002720]">Malaparamba, Kozhikode</span>
             </div>
@@ -190,7 +226,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
               </div>
               <button
                 onClick={() => setIsAuthenticated(false)}
-                className="text-[#ba1a1a] font-bold hover:underline ml-2"
+                className="text-[#ba1a1a] font-bold hover:underline ml-2 cursor-pointer"
                 type="button"
               >
                 [Logout Admin]
@@ -250,6 +286,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
               { id: 'features', label: 'Villa Features', icon: 'pool' },
               { id: 'media', label: 'Media Assets', icon: 'photo_library' },
               { id: 'sync', label: 'Channel Feeds', icon: 'sync_alt' },
+              { id: 'calendar', label: 'Calendar Settings', icon: 'calendar_month' },
             ].map((mod) => (
               <button
                 key={mod.id}
@@ -552,7 +589,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             </div>
           )}
 
-          {/* MODULE 4: VILLA FEATURES & AMENITIES CHECKLIST */}
+          {/* MODULE 4: VILLA FEATURES */}
           {activeModule === 'features' && (
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-1">
@@ -602,7 +639,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             </div>
           )}
 
-          {/* MODULE 5: MEDIA ASSETS MANAGER */}
+          {/* MODULE 5: MEDIA ASSETS */}
           {activeModule === 'media' && (
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-1">
@@ -625,7 +662,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
                 <p className="text-xs text-[#414846]">Manage the curated portfolio displayed on the live booking page and external channel feeds.</p>
               </div>
 
-              {/* Media Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {mediaList.map((m) => (
                   <div key={m.id} className="group relative rounded-2xl overflow-hidden bg-white shadow-sm border border-[#ebe8e2] flex flex-col">
@@ -653,7 +689,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
             </div>
           )}
 
-          {/* MODULE 6: CALENDAR & CHANNEL SYNC SETTINGS */}
+          {/* MODULE 6: CHANNEL FEEDS */}
           {activeModule === 'sync' && (
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-1">
@@ -681,49 +717,121 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
                 </div>
                 <span className="text-[11px] text-[#717976]">Paste this link into your Airbnb or MakeMyTrip Extranet to auto-block booked dates immediately.</span>
               </div>
+            </div>
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#ebe8e2] flex flex-col justify-between gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#002720]">Airbnb</span>
-                    <span className="font-bold text-[#002720] px-2 py-0.5 rounded bg-[#bfecdf] text-[10px] uppercase">Active Sync</span>
+          {/* MODULE 7: CALENDAR SETTINGS & BLOCKOUTS (Admin Only) */}
+          {activeModule === 'calendar' && (
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-serif text-2xl font-bold text-[#002720]">Calendar Date Settings &amp; Manual Blockouts</h2>
+                  <span className="text-[10px] uppercase bg-[#fedeb2] text-[#281800] px-2.5 py-1 rounded font-bold">
+                    Admin Exclusive Control
+                  </span>
+                </div>
+                <p className="text-xs text-[#414846]">
+                  As administrator <strong className="text-[#002720]">amohan4</strong>, you can block specific dates, lock maintenance periods, or add exclusive owner stays instantly.
+                </p>
+              </div>
+
+              {/* Add New Blockout Form */}
+              <form onSubmit={handleAddBlockout} className="p-6 rounded-2xl bg-white shadow-sm border border-[#ebe8e2] flex flex-col gap-4 text-xs">
+                <span className="font-serif text-base font-bold text-[#002720]">Add Manual Calendar Blockout</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="uppercase font-bold text-[#414846]">Start Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={newBlockStart}
+                      onChange={(e) => setNewBlockStart(e.target.value)}
+                      className="p-2.5 rounded-xl bg-[#f6f3ed] border border-[#c0c8c4] text-[#1c1c18] font-semibold"
+                    />
                   </div>
-                  <div className="flex flex-col gap-0.5 text-[#414846]">
-                    <span>Listing ID: #48291048</span>
-                    <span>Last ping: 2 mins ago (Zero conflicts)</span>
+                  <div className="flex flex-col gap-1">
+                    <label className="uppercase font-bold text-[#414846]">End Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={newBlockEnd}
+                      onChange={(e) => setNewBlockEnd(e.target.value)}
+                      className="p-2.5 rounded-xl bg-[#f6f3ed] border border-[#c0c8c4] text-[#1c1c18] font-semibold"
+                    />
                   </div>
-                  <button className="text-[#725b38] font-semibold hover:underline text-left cursor-pointer" type="button">Configure Webhook</button>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#ebe8e2] flex flex-col justify-between gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#002720]">MakeMyTrip</span>
-                    <span className="font-bold text-[#002720] px-2 py-0.5 rounded bg-[#bfecdf] text-[10px] uppercase">Active Sync</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="uppercase font-bold text-[#414846]">Blockout Source / Channel *</label>
+                    <select
+                      value={newBlockChannel}
+                      onChange={(e) => setNewBlockChannel(e.target.value as any)}
+                      className="p-2.5 rounded-xl bg-[#f6f3ed] border border-[#c0c8c4] text-[#1c1c18] font-semibold cursor-pointer"
+                    >
+                      <option value="Owner Block">Owner Exclusive Stay</option>
+                      <option value="Maintenance">Villa Maintenance &amp; Repair</option>
+                      <option value="Airbnb">Airbnb Manual Lock</option>
+                      <option value="MakeMyTrip">MakeMyTrip Manual Lock</option>
+                      <option value="Booking.com">Booking.com Manual Lock</option>
+                    </select>
                   </div>
-                  <div className="flex flex-col gap-0.5 text-[#414846]">
-                    <span>Hotel Code: MMT_KL_9824</span>
-                    <span>Last ping: 9 mins ago (Connected)</span>
+                  <div className="flex flex-col gap-1">
+                    <label className="uppercase font-bold text-[#414846]">Reason / Guest Note *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newBlockReason}
+                      onChange={(e) => setNewBlockReason(e.target.value)}
+                      placeholder="e.g. Annual pool servicing / Family visit"
+                      className="p-2.5 rounded-xl bg-[#f6f3ed] border border-[#c0c8c4]"
+                    />
                   </div>
-                  <button className="text-[#725b38] font-semibold hover:underline text-left cursor-pointer" type="button">Configure Webhook</button>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#ebe8e2] flex flex-col justify-between gap-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#002720]">Direct Engine</span>
-                    <span className="font-bold text-[#281800] px-2 py-0.5 rounded bg-[#fedeb2] text-[10px] uppercase">Master Feed</span>
-                  </div>
-                  <div className="flex flex-col gap-0.5 text-[#414846]">
-                    <span>Realtime WebSocket: Connected</span>
-                    <span>Zero channel commissions</span>
-                  </div>
-                  <button className="text-[#725b38] font-semibold hover:underline text-left cursor-pointer" type="button">Engine Settings</button>
+                <button
+                  type="submit"
+                  className="mt-2 py-3 rounded-xl bg-[#002720] hover:bg-[#133e35] text-white font-semibold tracking-wider uppercase transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">block</span>
+                  <span>Apply Calendar Blockout</span>
+                </button>
+              </form>
+
+              {/* Active Blockouts Table */}
+              <div className="p-6 rounded-2xl bg-white shadow-sm border border-[#ebe8e2] flex flex-col gap-4 text-xs">
+                <span className="font-serif text-base font-bold text-[#002720]">Active Blocked Date Ranges ({blockedDates.length})</span>
+                <div className="flex flex-col gap-2">
+                  {blockedDates.map((item) => (
+                    <div key={item.id} className="p-3.5 rounded-xl bg-[#f6f3ed] flex items-center justify-between gap-4 border border-[#ebe8e2]">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase ${
+                          item.channel === 'Owner Block' ? 'bg-[#725b38] text-white' : item.channel === 'Maintenance' ? 'bg-[#ba1a1a] text-white' : 'bg-[#002720] text-[#bfecdf]'
+                        }`}>
+                          {item.channel}
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#002720] text-sm">{item.startDate} to {item.endDate}</span>
+                          <span className="text-[#414846] text-xs">{item.reason}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setBlockedDates(blockedDates.filter((b) => b.id !== item.id))}
+                        className="p-2 rounded-lg bg-white text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors cursor-pointer"
+                        title="Remove Blockout"
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Sticky Live Cost Simulation & Preview Drawer */}
+        {/* Right Sticky Live Cost Simulator & Preview Drawer */}
         <div className="w-full lg:w-[410px] flex-shrink-0 flex flex-col gap-4 sticky top-48">
           <div className="p-6 rounded-2xl bg-white shadow-md border border-[#ebe8e2] flex flex-col gap-5 text-xs">
             <div className="flex items-center justify-between">
@@ -781,25 +889,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onPreviewLive }) => {
                 Save &amp; Broadcast Rates Live
               </button>
               <span className="text-center text-[10px] text-[#717976]">Instant propagation to all connected guests &amp; sync portals.</span>
-            </div>
-          </div>
-
-          {/* Quick Host Telemetry / Villa Fact Sheet */}
-          <div className="p-4 rounded-2xl bg-[#f6f3ed] shadow-sm border border-[#ebe8e2] flex flex-col gap-2 text-xs">
-            <span className="text-[10px] uppercase font-bold text-[#725b38]">Villa Property Identity</span>
-            <div className="flex flex-col gap-1 text-[#414846]">
-              <div className="flex items-center justify-between">
-                <span>Registered Address:</span>
-                <span className="font-semibold text-[#002720]">Malaparamba, Kozhikode</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Geo Coordinates:</span>
-                <span className="font-semibold text-[#002720]">{VILLA_CONTACT.gps}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Property Manager:</span>
-                <span className="font-semibold text-[#002720]">{VILLA_CONTACT.ownerName} ({VILLA_CONTACT.ownerPhone})</span>
-              </div>
             </div>
           </div>
         </div>
