@@ -2,5 +2,7 @@
   "name": "Dreams Premium Pool Villa",
   "description": "Exclusive 4-bedroom private luxury pool villa sanctuary in Malaparamba, Kozhikode with live direct booking, interactive amenities tour, curated Calicut guide, guest reviews, and property admin CMS.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

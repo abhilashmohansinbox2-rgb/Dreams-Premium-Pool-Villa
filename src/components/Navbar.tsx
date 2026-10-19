@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationTab } from '../types/index.ts';
 import { VILLA_CONTACT } from '../data/villaData.ts';
+import { AuthModal } from './AuthModal.tsx';
+import { auth } from '../firebase.ts';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface NavbarProps {
   activeTab: NavigationTab;
@@ -10,6 +13,13 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserveClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setCurrentUser(u));
+    return () => unsub();
+  }, []);
 
   const navItems: { id: NavigationTab; label: string }[] = [
     { id: 'overview', label: 'Overview & Tour' },
@@ -51,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserv
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleSelectTab('admin')}
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors shadow-sm ${
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors shadow-sm cursor-pointer ${
                 activeTab === 'admin'
                   ? 'bg-[#fedeb2] text-[#281800]'
                   : 'bg-[#725b38] text-white hover:bg-[#584323]'
@@ -83,6 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserv
         <button
           onClick={() => handleSelectTab('overview')}
           className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none"
+          type="button"
         >
           <img
             alt="Dreams Premium Pool Villa Logo"
@@ -123,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserv
           })}
         </nav>
 
-        {/* Action Controls & Host Badge */}
+        {/* Action Controls & Firebase Auth Button */}
         <div className="flex items-center gap-3">
           <button
             onClick={onReserveClick}
@@ -134,28 +145,39 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserv
             Reserve Direct
           </button>
 
-          {/* Host Avatar Badge */}
-          <div className="flex items-center gap-2 pl-1 border-l border-[#ebe8e2]">
-            <img
-              alt="Host Abhilash Mohan"
-              className="w-9 h-9 rounded-full object-cover ring-2 ring-[#fedeb2] shadow-sm"
-              src={VILLA_CONTACT.hostAvatar}
-            />
+          {/* Firebase Auth Sign-in / User Profile Button */}
+          <button
+            onClick={() => setAuthModalOpen(true)}
+            className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg bg-[#f0eee8] hover:bg-[#e5e2dc] transition-colors border border-[#c0c8c4]/40 cursor-pointer"
+            type="button"
+            title="Firebase Auth Account"
+          >
+            {currentUser?.photoURL ? (
+              <img
+                src={currentUser.photoURL}
+                alt={currentUser.displayName || 'User'}
+                className="w-7 h-7 rounded-full object-cover ring-2 ring-[#725b38]"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-[#002720] text-white flex items-center justify-center text-xs font-bold">
+                {currentUser?.email ? currentUser.email[0].toUpperCase() : <span className="material-symbols-outlined text-sm">person</span>}
+              </div>
+            )}
             <div className="hidden lg:flex flex-col text-left">
               <span className="text-xs font-semibold text-[#1c1c18] leading-tight flex items-center gap-1">
-                {VILLA_CONTACT.ownerName}
-                <span className="w-2 h-2 rounded-full bg-[#25D366] inline-block animate-pulse" />
+                {currentUser ? (currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'My Account') : 'Sign In'}
+                <span className={`w-2 h-2 rounded-full inline-block ${currentUser ? 'bg-[#25D366]' : 'bg-[#725b38]'}`} />
               </span>
-              <span className="text-[11px] text-[#725b38] font-medium leading-tight">
-                Villa Host · Online
+              <span className="text-[10px] text-[#725b38] font-medium leading-tight">
+                {currentUser ? 'Firebase Secure' : 'Auth Ready'}
               </span>
             </div>
-          </div>
+          </button>
 
           {/* Mobile Menu Hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 rounded-lg bg-[#f0eee8] text-[#002720] hover:bg-[#e5e2dc] transition-colors"
+            className="xl:hidden p-2 rounded-lg bg-[#f0eee8] text-[#002720] hover:bg-[#e5e2dc] transition-colors cursor-pointer"
             type="button"
             aria-label="Toggle mobile menu"
           >
@@ -189,19 +211,29 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onReserv
                 onReserveClick();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 rounded-lg bg-[#002720] text-white font-semibold text-sm flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-lg bg-[#002720] text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
               type="button"
             >
               <span className="material-symbols-outlined text-[18px]">calendar_month</span>
               Reserve Direct
             </button>
-            <div className="flex items-center justify-between text-xs text-[#414846] px-1 pt-1">
-              <span>Reception: <a href={`tel:${VILLA_CONTACT.receptionPhoneTel}`} className="font-semibold text-[#002720]">{VILLA_CONTACT.receptionPhone}</a></span>
-              <span>Owner: <a href={`tel:${VILLA_CONTACT.ownerPhoneTel}`} className="font-semibold text-[#002720]">{VILLA_CONTACT.ownerPhone}</a></span>
-            </div>
+            <button
+              onClick={() => {
+                setAuthModalOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full py-2 rounded-lg bg-[#f0eee8] text-[#002720] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-base">person</span>
+              {currentUser ? 'Manage Firebase Account' : 'Sign In with Google'}
+            </button>
           </div>
         </div>
       )}
+
+      {/* Firebase Auth Modal */}
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </header>
   );
 };
